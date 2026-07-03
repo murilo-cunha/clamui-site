@@ -1,0 +1,148 @@
+# publish-release — runs in the PUBLIC murilo-cunha/clamui-site repo.
+#
+# CANONICAL COPY: this file lives in the private clamui repo at
+# .github/site/publish-release.yml. It executes from TWO places, which must
+# stay in sync (both are written from this file):
+#   1. Baked into every release-staging/vX.Y.Z orphan commit by clamui's
+#      release.yml `publish-public` job — push-triggered workflows only run
+#      when the workflow file exists ON THE PUSHED REF, and the staging branch
+#      is an orphan. This copy is the one that actually runs on a release.
+#   2. On clamui-site's `main` (default) branch — required for the
+#      workflow_dispatch fallback (re-run a failed relay without re-tagging).
+#      NOT on gh-pages: publish-site.yml force-orphans that branch on every
+#      docs push, which would wipe the file.
+#
+# What it does: turn a release-staging/vX.Y.Z branch (dmg + vsix + updater
+# tar.gz/sig, pushed by the private clamui repo over SITE_DEPLOY_KEY) into a
+# public GitHub release with a Tauri updater manifest (latest.json), stable
+# version-less asset copies for the website's direct-download buttons, and a
+# Homebrew cask bump — then delete the staging branch.
+#
+# Release ordering is deliberate: draft → upload ALL assets → publish, so
+# releases/latest/download/… can never resolve to a half-populated release.
+# The tap bump runs LAST — a missing bump is recoverable (dispatch re-run),
+# a cask pointing at a 404 is not.
+
+name: publish-release
+
+on:
+  push:
+    branches: ["release-staging/**"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to (re)publish, e.g. 0.3.0 (reads release-staging/v<version>)"
+        required: true
+        type: string
+
+concurrency: release-relay
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Derive version
+        id: v
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="${INPUT_VERSION#v}"
+          else
+            VERSION="${GITHUB_REF_NAME#release-staging/v}"
+          fi
+          case "$VERSION" in
+            [0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::cannot derive X.Y.Z from ref '$GITHUB_REF_NAME' / input '$INPUT_VERSION'"; exit 1 ;;
+          esac
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: release-staging/v${{ steps.v.outputs.version }}
+
+      # Fail BEFORE touching the release if the producer pushed a wrong or
+      # partial file set — asset names below are load-bearing (cask URL,
+      # latest.json URL, website direct-download URLs).
+      - name: Validate the staged file set
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          missing=0
+          for f in "clamui_${VERSION}_aarch64.dmg" "clamui-${VERSION}.vsix" \
+                   clamui.app.tar.gz clamui.app.tar.gz.sig; do
+            if [ ! -f "$f" ]; then echo "::error::staging branch is missing $f"; missing=1; fi
+          done
+          [ "$missing" -eq 0 ]
+
+      # Version-less copies give the website stable direct-download URLs via
+      # releases/latest/download/… . Brew + latest.json keep the VERSIONED,
+      # sha-immutable names.
+      - name: Make stable-named copies
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          cp "clamui_${VERSION}_aarch64.dmg" clamui_aarch64.dmg
+          cp "clamui-${VERSION}.vsix" clamui.vsix
+
+      - name: Generate latest.json (Tauri updater manifest)
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          jq -n \
+            --arg version "$VERSION" \
+            --arg notes "clamui v$VERSION — download: https://murilo-cunha.github.io/clamui-site/" \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg sig "$(cat clamui.app.tar.gz.sig)" \
+            --arg url "https://github.com/murilo-cunha/clamui-site/releases/download/v$VERSION/clamui.app.tar.gz" \
+            '{version: $version, notes: $notes, pub_date: $pub_date,
+              platforms: {"darwin-aarch64": {signature: $sig, url: $url}}}' \
+            > latest.json
+          cat latest.json
+
+      - name: Create the release (draft → upload all → publish)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          # Idempotency: a re-tagged or re-dispatched version replaces its release.
+          gh release delete "v$VERSION" --cleanup-tag --yes || true
+          gh release create "v$VERSION" --draft \
+            --title "clamui v$VERSION" \
+            --notes "clamui v$VERSION — macOS app (dmg), VS Code extension (vsix), and the in-app updater feed. Install notes: https://murilo-cunha.github.io/clamui-site/#download" \
+            "clamui_${VERSION}_aarch64.dmg" "clamui-${VERSION}.vsix" \
+            clamui_aarch64.dmg clamui.vsix \
+            clamui.app.tar.gz clamui.app.tar.gz.sig latest.json
+          gh release edit "v$VERSION" --draft=false --latest
+
+      - name: Bump the Homebrew cask
+        env:
+          TAP_DEPLOY_KEY: ${{ secrets.TAP_DEPLOY_KEY }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          SHA256="$(sha256sum "clamui_${VERSION}_aarch64.dmg" | cut -d' ' -f1)"
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "$TAP_DEPLOY_KEY" > "$HOME/.ssh/tap_deploy"
+          chmod 600 "$HOME/.ssh/tap_deploy"
+          ssh-keyscan github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/tap_deploy"
+          git clone git@github.com:murilo-cunha/homebrew-clamui.git tap
+          cd tap
+          sed -i -E "s|^  version \".*\"|  version \"$VERSION\"|" Casks/clamui.rb
+          sed -i -E "s|^  sha256 \".*\"|  sha256 \"$SHA256\"|" Casks/clamui.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "clamui $VERSION"
+          git push
+
+      # Only on full success — a lingering staging branch is the recovery
+      # handle for the workflow_dispatch fallback.
+      - name: Delete the staging branch
+        if: success()
+        env:
+          VERSION: ${{ steps.v.outputs.version }}
+        run: git push origin --delete "release-staging/v$VERSION" || true
