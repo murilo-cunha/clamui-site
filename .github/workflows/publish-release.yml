@@ -94,7 +94,7 @@ jobs:
         run: |
           jq -n \
             --arg version "$VERSION" \
-            --arg notes "clamui v$VERSION — download: https://murilo-cunha.github.io/clamui-site/" \
+            --arg notes "clamui v$VERSION — download: https://clamui.muri.dev/" \
             --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg sig "$(cat clamui.app.tar.gz.sig)" \
             --arg url "https://github.com/murilo-cunha/clamui-site/releases/download/v$VERSION/clamui.app.tar.gz" \
@@ -113,7 +113,7 @@ jobs:
           gh release delete "v$VERSION" --cleanup-tag --yes || true
           gh release create "v$VERSION" --draft \
             --title "clamui v$VERSION" \
-            --notes "clamui v$VERSION — macOS app (dmg), VS Code extension (vsix), and the in-app updater feed. Install notes: https://murilo-cunha.github.io/clamui-site/#download" \
+            --notes "clamui v$VERSION — macOS app (dmg), VS Code extension (vsix), and the in-app updater feed. Install notes: https://clamui.muri.dev/#download" \
             "clamui_${VERSION}_aarch64.dmg" "clamui-${VERSION}.vsix" \
             clamui_aarch64.dmg clamui.vsix \
             clamui.app.tar.gz clamui.app.tar.gz.sig latest.json
