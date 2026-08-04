@@ -1,0 +1,1533 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>clamui — AI edits you review before they land</title>
+<meta name="description" content="clamui is a markdown editor with Claude built in. Every AI suggestion arrives as a side-by-side diff you accept or reject before it touches your file." />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgcnk9IjE0IiBmaWxsPSIjMTcxOTFmIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNi40IDQuNikgc2NhbGUoMC44KSI+PHBhdGggZmlsbD0iI2VjZTVkYiIgZD0iTTggMzkgQyAxMiA1MSwgMjQgNTUsIDMyIDU1IEMgNDAgNTUsIDUyIDUxLCA1NiAzOSBDIDUwIDQzLCA0MCA0NSwgMzIgNDUgQyAyNCA0NSwgMTQgNDMsIDggMzkgWiIvPjxwYXRoIGZpbGw9IiNlY2U1ZGIiIGQ9Ik0xMSAyNyBDIDE1IDE3LCAyNSAxMy41LCAzMiAxMy41IEMgMzkgMTMuNSwgNDkgMTcsIDUzIDI3IEMgNDcuNSAyMy41LCAzOSAyMiwgMzIgMjIgQyAyNSAyMiwgMTYuNSAyMy41LCAxMSAyNyBaIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjMuNSAyNCkgc2NhbGUoMC43MDgzKSI+PHBhdGggZmlsbD0iI2Q5Nzc1NyIgZD0iTTEyIDBDMTIgNiA2IDEyIDAgMTJDNiAxMiAxMiAxOCAxMiAyNEMxMiAxOCAxOCAxMiAyNCAxMkMxOCAxMiAxMiA2IDEyIDBaIi8+PC9nPjwvZz48L3N2Zz4=" />
+<style>
+/* ============================================================
+   FONTS — referenced relatively from fonts/ (offline, no CDN)
+   ============================================================ */
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/Inter-roman-latin.var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --prose: "Inter", -apple-system, system-ui, sans-serif;
+  --r: 8px;
+  --maxw: 1100px;
+}
+
+/* ---- Plasma tokens: dark (default) ---- */
+[data-theme="dark"] {
+  --bg: #1b1e24;
+  --page-bg: #15171c;
+  --panel: #21252d;
+  --elev: #262b34;
+  --border: #2e333d;
+  --text: #d7dbe2;
+  --text-strong: #eef1f5;
+  --muted: #8b929e;
+  --muted-2: #868d99;
+  --accent: #d97757;
+  --accent-ink: #e0876a;
+  --accent-strong: #a8492c;
+  --accent-strong-hover: #8f3c23;
+  --accent-soft: rgba(217, 119, 87, 0.16);
+  --add: #2ea043;
+  --add-ink: #56d364;
+  --add-bg: #12261a;
+  --del: #f85149;
+  --del-ink: #ff7b72;
+  --del-bg: #2d1518;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --caret: #e0876a;
+  --hero-glow: rgba(217, 119, 87, 0.10);
+}
+
+/* ---- Plasma tokens: light (derived) ---- */
+[data-theme="light"] {
+  --bg: #fbfbfc;
+  --page-bg: #fbfbfc;
+  --panel: #f3f4f6;
+  --elev: #ffffff;
+  --border: #e4e7ec;
+  --text: #1f2329;
+  --text-strong: #14171c;
+  --muted: #6b7280;
+  --muted-2: #5b626d;
+  --accent: #d97757;
+  --accent-ink: #a84e30;
+  --accent-strong: #a8492c;
+  --accent-strong-hover: #8f3c23;
+  --accent-soft: rgba(217, 119, 87, 0.12);
+  --add: #1a7f37;
+  --add-ink: #1a7f37;
+  --add-bg: #e8f6ec;
+  --del: #cf222e;
+  --del-ink: #cf222e;
+  --del-bg: #ffeceb;
+  --shadow: 0 18px 50px rgba(20, 24, 33, 0.12);
+  --caret: #bd5a39;
+  --hero-glow: rgba(217, 119, 87, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  background:
+    radial-gradient(1200px 620px at 72% -8%, var(--hero-glow), transparent 60%),
+    var(--page-bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+a { color: var(--accent-ink); }
+
+:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.skip {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: var(--accent-strong);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--r);
+  z-index: 100;
+  font-size: 14px;
+  font-weight: 600;
+}
+.skip:focus { left: 12px; top: 12px; }
+
+main:focus { outline: none; }
+
+/* ============================================================
+   TOP NAV
+   ============================================================ */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--page-bg) 86%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+  text-decoration: none;
+}
+.brand-mark { flex: none; display: block; width: 20px; height: 20px; }
+.brand-mark .shell { fill: currentColor; }
+.brand-mark .spark { fill: var(--accent-ink); }
+.nav-links {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav-links a {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 7px 11px;
+  border-radius: 7px;
+}
+.nav-links a:hover { color: var(--text); background: var(--border); }
+.nav-links a.gh { color: var(--text); }
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 6px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--text); }
+.theme-toggle .ti { font-size: 13px; }
+
+.nav-burger {
+  display: none;
+  margin-left: auto;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 10px 16px 16px;
+    background: var(--page-bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-links.open { display: flex; }
+  .nav-links a { padding: 11px 12px; font-size: 15px; }
+  .theme-toggle { margin-left: 0; align-self: flex-start; margin-top: 6px; }
+  .nav-burger { display: inline-flex; }
+}
+
+/* ============================================================
+   SHARED SECTION SCAFFOLD
+   ============================================================ */
+section { padding: 84px 0; }
+section + section { border-top: 1px solid var(--border); }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-ink);
+  margin: 0 0 16px;
+}
+.eyebrow .n { color: var(--muted-2); }
+
+h2.sec-title {
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.18;
+  margin: 0 0 18px;
+  color: var(--text-strong);
+  max-width: 22ch;
+}
+.lede {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 62ch;
+  margin: 0;
+}
+
+/* horizontal scroll container for wide visuals */
+.scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 9px;
+  padding: 12px 20px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  line-height: 1;
+}
+.btn-primary {
+  background: var(--accent-strong);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(217, 119, 87, 0.32);
+}
+.btn-primary:hover { background: var(--accent-strong-hover); }
+.btn-ghost {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-ghost:hover { border-color: var(--accent); }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero { padding-top: 72px; padding-bottom: 92px; }
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 52px;
+  align-items: center;
+}
+.hero-copy { min-width: 0; }
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  white-space: normal;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-bottom: 22px;
+}
+.hero h1 {
+  font-size: clamp(34px, 6vw, 54px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 0 0 20px;
+  color: var(--text-strong);
+}
+.hero h1 .hl { color: var(--accent-ink); }
+.hero-sub {
+  font-size: clamp(16px, 2.2vw, 18px);
+  line-height: 1.62;
+  color: var(--muted);
+  margin: 0 0 30px;
+  max-width: 50ch;
+}
+.hero-sub strong { color: var(--text); font-weight: 600; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.hero-brew { margin-top: 22px; max-width: 460px; }
+.hero-note {
+  margin: 12px 0 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted-2);
+}
+.hero-note .dotsep { color: var(--border); margin: 0 8px; }
+
+.hero-visual { min-width: 0; }
+
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .hero { padding-top: 56px; }
+}
+
+/* ============================================================
+   APP FRAME — the clamui workspace (reused from Plasma mockup)
+   ============================================================ */
+.app {
+  min-width: 920px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.topbar {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.tb-group { display: flex; align-items: center; gap: 6px; }
+.tb-group.right { margin-left: auto; }
+.iconbtn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-family: var(--sans);
+}
+.iconbtn.active { color: var(--accent-ink); background: var(--accent-soft); }
+.proj { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+.proj .sep { color: var(--muted); font-weight: 400; margin: 0 7px; }
+.proj .file { color: var(--muted); font-weight: 500; }
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--elev);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.status-chip .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--add);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--add) 22%, transparent);
+}
+.status-chip b { color: var(--text); font-weight: 600; }
+.status-chip .pipe { color: var(--border); }
+.open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+}
+.open-btn .k { font-family: var(--mono); opacity: 0.8; font-size: 10.5px; }
+
+.body {
+  display: grid;
+  grid-template-columns: 196px 340px 1fr;
+  height: 512px;
+}
+.pane { overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.tree { background: var(--panel); border-right: 1px solid var(--border); }
+.chat { background: var(--bg); border-right: 1px solid var(--border); }
+.editor { background: var(--bg); position: relative; }
+
+.pane-head {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.pane-head .tools { display: flex; gap: 6px; }
+.pane-head .tool { opacity: 0.7; }
+
+.tree-list { padding: 6px 0; overflow: auto; font-size: 13px; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  white-space: nowrap;
+  color: var(--text);
+}
+.row.on { background: var(--accent-soft); color: var(--accent-ink); }
+.row.mut { color: var(--muted); }
+.row .tw { width: 12px; text-align: center; font-size: 10px; color: var(--muted); }
+.row .ic { font-size: 12px; }
+
+.chat-body {
+  flex: 1;
+  overflow: auto;
+  padding: 14px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg { font-size: 13px; line-height: 1.58; }
+.msg.user {
+  align-self: flex-end;
+  max-width: 84%;
+  background: var(--accent);
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 13px 13px 3px 13px;
+}
+.bubble { align-self: flex-start; max-width: 95%; }
+.md { color: var(--text); }
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p { margin: 0 0 8px; }
+.md strong { font-weight: 600; }
+.md em { font-style: italic; }
+.md code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  background: var(--elev);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+.md ul { margin: 0 0 8px; padding-left: 18px; }
+.md li { margin: 2px 0; }
+.md li::marker { color: var(--accent); }
+
+.caret-stream {
+  display: inline-block;
+  width: 7px;
+  height: 1.05em;
+  background: var(--caret);
+  vertical-align: text-bottom;
+  margin-left: 1px;
+  animation: blink 1.1s steps(1) infinite;
+}
+
+.card {
+  align-self: flex-start;
+  max-width: 95%;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--panel);
+  font-size: 12px;
+}
+.card .chead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  color: var(--muted);
+}
+.card .chead .badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+.card .chead .name { color: var(--text); font-weight: 500; font-family: var(--mono); font-size: 11.5px; }
+.card .chead .chev { margin-left: auto; color: var(--muted); }
+.card.tool .chead .ok { color: var(--add-ink); font-size: 13px; }
+.card.think .chead { font-style: italic; }
+
+.composer {
+  border-top: 1px solid var(--border);
+  padding: 9px 11px 11px;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.mode-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent-ink);
+  margin-bottom: 8px;
+}
+.mode-chip .gl { letter-spacing: -1px; }
+.mode-chip .hint { color: var(--muted); }
+.input {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--elev);
+  padding: 9px 10px;
+}
+.input .ph { flex: 1; color: var(--muted); font-size: 13px; }
+.input .send {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+}
+
+.tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 13px;
+  font-size: 12.5px;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+.tab.on { background: var(--bg); color: var(--text); }
+.tab .dirty { color: var(--accent); font-size: 8px; }
+.tab .x { opacity: 0.45; }
+
+.doc { flex: 1; display: flex; min-height: 0; }
+.doc-scroll { flex: 1; overflow: auto; padding: 26px 0 60px; }
+.prose {
+  font-family: var(--prose);
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 0 30px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.prose h1 { font-size: 1.7em; font-weight: 700; line-height: 1.25; margin: 0 0 0.4em; letter-spacing: -0.015em; }
+.prose h2 { font-size: 1.32em; font-weight: 700; margin: 1.1em 0 0.35em; letter-spacing: -0.01em; }
+.prose p { margin: 0 0 0.85em; }
+.prose strong { font-weight: 700; }
+.prose em { font-style: italic; }
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 14px;
+  margin: 0 0 0.85em;
+  color: var(--muted);
+  font-style: italic;
+}
+.prose .ic { font-family: var(--mono); font-size: 0.84em; background: var(--elev); border: 1px solid var(--border); padding: 1px 5px; border-radius: 5px; }
+.prose .imgph {
+  height: 110px;
+  border-radius: var(--r);
+  background: repeating-linear-gradient(45deg, var(--panel), var(--panel) 10px, var(--elev) 10px, var(--elev) 20px);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 0 0.85em;
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  background: var(--caret);
+  vertical-align: -0.16em;
+  margin-left: 1px;
+  animation: blink 1.1s steps(1) infinite;
+}
+@keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+.sel { background: color-mix(in srgb, var(--accent) 24%, transparent); border-radius: 2px; padding: 0 1px; position: relative; }
+.fxchip {
+  position: absolute;
+  top: -30px;
+  right: -8px;
+  height: 24px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 7px;
+  background: var(--elev);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  font-size: 11px;
+  color: var(--text);
+  font-family: var(--mono);
+}
+.fxchip .star { color: var(--accent); }
+.fxchip .k { color: var(--muted); }
+
+.outline {
+  width: 172px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  background: var(--panel);
+  padding: 12px 0;
+  font-size: 12px;
+  overflow: auto;
+}
+.outline .ot {
+  padding: 0 14px 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  color: var(--muted);
+}
+.outline .oi { padding: 4px 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.outline .oi.l1 { font-weight: 600; }
+.outline .oi.l2 { padding-left: 24px; color: var(--muted); }
+.outline .oi.on { color: var(--accent-ink); box-shadow: inset 2px 0 0 var(--accent); }
+
+/* ============================================================
+   FEATURES GRID
+   ============================================================ */
+.features-head { margin-bottom: 44px; }
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+@media (max-width: 900px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .feat-grid { grid-template-columns: 1fr; } }
+
+.feat {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.feat.featured {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background:
+    linear-gradient(180deg, var(--accent-soft), transparent 70%),
+    var(--panel);
+}
+.feat-glyph {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  background: var(--elev);
+  border: 1px solid var(--border);
+  color: var(--accent-ink);
+}
+.feat h3 {
+  font-size: 16.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--text-strong);
+  line-height: 1.3;
+}
+.feat p {
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: var(--muted);
+  margin: 0;
+  flex: 1;
+}
+.feat p strong, .feat p b { color: var(--text); font-weight: 600; }
+.feat-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.feat-link {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  text-decoration: none;
+  margin-top: 6px;
+}
+.feat-link:hover { text-decoration: underline; }
+
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--elev);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 3px 7px;
+}
+.keycap .lbl { color: var(--muted); font-weight: 400; margin-left: 7px; }
+
+/* ============================================================
+   REVIEWED EDITS
+   ============================================================ */
+.reviewed-head { margin-bottom: 40px; }
+.reviewed-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  max-width: 880px;
+}
+@media (max-width: 760px) { .reviewed-body { grid-template-columns: 1fr; gap: 18px; } }
+.reviewed-body p {
+  font-size: 15px;
+  line-height: 1.72;
+  color: var(--muted);
+  margin: 0;
+}
+.reviewed-body p strong, .reviewed-body p b { color: var(--text); font-weight: 600; }
+.pullquote {
+  margin: 34px 0 40px;
+  padding: 22px 26px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 12px 12px 0;
+  font-size: clamp(18px, 3vw, 22px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+  max-width: 720px;
+}
+
+/* DIFF — side-by-side review (reused from Plasma mockup) */
+.review { display: flex; flex-direction: column; }
+.app.diff-frame { height: 430px; }
+.app.diff-frame .review { height: 100%; }
+.review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--panel);
+  gap: 12px;
+}
+.review-head .t { font-size: 13px; color: var(--text); }
+.review-head .t b { font-weight: 600; }
+.review-head .t .of { color: var(--muted); margin-left: 7px; font-family: var(--mono); font-size: 11.5px; }
+.review-actions { display: flex; gap: 9px; align-items: center; }
+.kbd { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.btn-rej, .btn-acc {
+  border: 0; border-radius: 7px; padding: 7px 15px; font-size: 12.5px; font-weight: 600; font-family: var(--sans);
+}
+.btn-rej { background: var(--elev); color: var(--text); border: 1px solid var(--border); }
+.btn-acc { background: #1f7a34; color: #fff; }
+[data-theme="light"] .btn-acc { background: #1a7f37; }
+
+.cols { flex: 1; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
+.col { overflow: auto; padding: 16px 0; }
+.col.before { border-right: 1px solid var(--border); }
+.col-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 0 22px 12px;
+}
+.difftext {
+  font-family: var(--prose);
+  font-size: 14.5px;
+  line-height: 1.72;
+  padding: 0 22px;
+  color: var(--text);
+}
+.difftext p { margin: 0 0 0.8em; }
+.line-del { background: var(--del-bg); display: block; margin: 0 -22px; padding: 0 22px; }
+.line-add { background: var(--add-bg); display: block; margin: 0 -22px; padding: 0 22px; }
+.t-del { background: color-mix(in srgb, var(--del) 26%, transparent); color: var(--del-ink); border-radius: 2px; text-decoration: line-through; text-decoration-thickness: 1px; }
+.t-add { background: color-mix(in srgb, var(--add) 26%, transparent); color: var(--add-ink); border-radius: 2px; }
+.gutter-add::before { content: "+"; color: var(--add-ink); font-family: var(--mono); margin-right: 8px; font-size: 12px; }
+.gutter-del::before { content: "−"; color: var(--del-ink); font-family: var(--mono); margin-right: 8px; font-size: 12px; }
+
+/* ============================================================
+   DOWNLOAD
+   ============================================================ */
+.dl-head { margin-bottom: 44px; }
+.dl-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 1020px) { .dl-grid { grid-template-columns: 1fr; } }
+
+.dl-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  padding: 28px 26px;
+}
+.dl-card.primary {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  background:
+    linear-gradient(180deg, var(--accent-soft), transparent 60%),
+    var(--panel);
+}
+.dl-card h3 {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+  color: var(--text-strong);
+}
+.dl-card > p {
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+.dl-note {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted-2);
+  margin: 16px 0 0;
+}
+.dl-note .ver { font-family: var(--mono); color: var(--accent-ink); }
+.dl-note kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--elev);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 5px;
+  color: var(--text);
+}
+/* Numbered install steps (VS Code card) — same voice as .dl-note. */
+.dl-steps {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted-2);
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dl-steps li::marker { color: var(--accent-ink); font-family: var(--mono); }
+.dl-steps a { color: var(--accent-ink); }
+.dl-steps em { font-style: normal; color: var(--text); }
+.dl-steps strong { color: var(--text); font-weight: 600; }
+.dl-steps kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--elev);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 5px;
+  color: var(--text);
+}
+.dl-steps .codebox { margin-top: 8px; }
+.dl-card > .codebox { margin-top: 10px; }
+.dl-steps .mono, .dl-card .mono { font-family: var(--mono); color: var(--text); font-size: 12px; }
+.dl-req {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+.req-pill {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  background: var(--elev);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.codebox {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  overflow: clip;
+}
+.codebox-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--elev);
+}
+.codebox-head .lbl {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.copy-btn {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--text); }
+.codebox pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--text);
+}
+.codebox pre .cmd-prompt { color: var(--accent-ink); user-select: none; }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 0 56px;
+}
+.foot-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+}
+.foot-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-strong);
+}
+.foot-brand .brand-mark { width: 18px; height: 18px; }
+.foot-inner a { color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 500; }
+.foot-inner a:hover { color: var(--text); }
+.foot-built {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted-2);
+}
+@media (max-width: 600px) { .foot-built { margin-left: 0; flex-basis: 100%; } }
+
+/* ============================================================
+   MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .caret, .caret-stream { animation: none; }
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#top">Skip to content</a>
+
+<!-- ===================== TOP NAV ===================== -->
+<header>
+  <nav class="nav" aria-label="Primary">
+    <div class="nav-inner">
+      <a class="brand" href="#top"><svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path class="shell" d="M8 39 C 12 51, 24 55, 32 55 C 40 55, 52 51, 56 39 C 50 43, 40 45, 32 45 C 24 45, 14 43, 8 39 Z"/><path class="shell" d="M11 27 C 15 17, 25 13.5, 32 13.5 C 39 13.5, 49 17, 53 27 C 47.5 23.5, 39 22, 32 22 C 25 22, 16.5 23.5, 11 27 Z"/><g transform="translate(23.5 24) scale(0.7083)"><path class="spark" d="M12 0C12 6 6 12 0 12C6 12 12 18 12 24C12 18 18 12 24 12C18 12 12 6 12 0Z"/></g></svg>clamui</a>
+      <button class="nav-burger" id="burger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">☰</button>
+      <div class="nav-links" id="navlinks">
+        <a href="#features">Features</a>
+        <a href="#reviewed">Reviewed edits</a>
+        <a href="#download">Download</a>
+        <a class="gh" href="https://github.com/murilo-cunha/clamui-site">GitHub</a>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">
+          <span class="ti" id="themeIcon" aria-hidden="true">☾</span>
+          <span id="themeLabel">Dark</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main id="top" tabindex="-1">
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" aria-labelledby="hero-h1">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <span class="hero-tag">✦ markdown editor with Claude built in</span>
+          <h1 id="hero-h1">AI edits you <span class="hl">review</span> before they land</h1>
+          <p class="hero-sub">clamui is a markdown editor with Claude built in. Every suggestion arrives as a side-by-side diff — you <strong>Accept</strong> or <strong>Reject</strong>. Nothing touches your file until you say so.</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="https://github.com/murilo-cunha/clamui-site/releases/latest/download/clamui_aarch64.dmg">Download for macOS</a>
+            <a class="btn btn-ghost" href="https://github.com/murilo-cunha/clamui-site">View on GitHub</a>
+          </div>
+          <div class="codebox hero-brew">
+            <div class="codebox-head">
+              <span class="lbl">terminal</span>
+              <button class="copy-btn" type="button" aria-label="Copy brew install commands">Copy</button>
+            </div>
+            <pre><span class="cmd-prompt">$</span> brew tap murilo-cunha/clamui
+<span class="cmd-prompt">$</span> brew install clamui</pre>
+          </div>
+          <p class="hero-note">v0.7.0 <span class="dotsep">·</span> early and experimental <span class="dotsep">·</span> macOS <span class="dotsep">·</span> VS Code</p>
+        </div>
+
+        <div class="hero-visual">
+          <div class="scroller" role="img" aria-label="Screenshot: clamui's three-pane workspace — a file tree, a Claude chat panel streaming a reply, and a live-preview markdown editor.">
+            <!-- APP FRAME (reused from Plasma mockup) — decorative, hidden from AT -->
+            <div class="app" aria-hidden="true">
+              <div class="topbar">
+                <div class="tb-group">
+                  <button class="iconbtn active" title="Toggle file tree" tabindex="-1" aria-hidden="true">☰</button>
+                  <span class="proj">notes<span class="sep">/</span><span class="file">release-plan.md</span></span>
+                </div>
+                <div class="tb-group right">
+                  <span class="status-chip"><span class="dot"></span><b>opus</b><span class="pipe">·</span>low<span class="pipe">·</span>review<span class="pipe">·</span>1&nbsp;mcp</span>
+                  <button class="iconbtn" title="Toggle outline" tabindex="-1" aria-hidden="true">⊟</button>
+                  <button class="iconbtn" title="Theme" tabindex="-1" aria-hidden="true">◐</button>
+                  <span class="open-btn">Open<span class="k">⌘O</span></span>
+                </div>
+              </div>
+
+              <div class="body">
+                <!-- TREE -->
+                <div class="pane tree">
+                  <div class="pane-head"><span>Explorer</span><span class="tools"><span class="tool">⊟</span><span class="tool">⟳</span></span></div>
+                  <div class="tree-list">
+                    <div class="row"><span class="tw">▾</span><span class="ic">📂</span>notes</div>
+                    <div class="row on" style="padding-left:24px"><span class="tw"></span><span class="ic">📄</span>release-plan.md</div>
+                    <div class="row" style="padding-left:24px"><span class="tw"></span><span class="ic">📄</span>changelog.md</div>
+                    <div class="row" style="padding-left:24px"><span class="tw">▸</span><span class="ic">📁</span>drafts</div>
+                    <div class="row mut" style="padding-left:24px"><span class="tw"></span><span class="ic">·</span>cover.png</div>
+                    <div class="row"><span class="tw">▸</span><span class="ic">📁</span>archive</div>
+                  </div>
+                </div>
+
+                <!-- CHAT -->
+                <div class="pane chat">
+                  <div class="pane-head"><span>Claude</span><span class="tools"><span class="tool">⏱</span><span class="tool">⌫</span></span></div>
+                  <div class="chat-body">
+                    <div class="msg user">Tighten the intro and make the tone more confident.</div>
+                    <div class="card think"><div class="chead"><span>Thinking</span><span class="chev">▸</span></div></div>
+                    <div class="bubble msg">
+                      <div class="md">
+                        <p>I trimmed the opening to a single claim and staged the change for your review:</p>
+                        <ul>
+                          <li>cut the hedging in the first sentence</li>
+                          <li>led with the <strong>outcome</strong>, not the process</li>
+                        </ul>
+                        <p>You can also wrap the body in a callout — use <code>&gt; **Note**</code> at the top.</p>
+                      </div>
+                    </div>
+                    <div class="card tool"><div class="chead"><span class="badge">stage_edit</span><span class="name">release-plan.md</span><span class="ok">✓</span><span class="chev">staged</span></div></div>
+                    <div class="bubble msg">
+                      <div class="md"><p>Want me to do the same pass on the <em>changelog</em>?<span class="caret-stream" aria-hidden="true"></span></p></div>
+                    </div>
+                  </div>
+                  <div class="composer">
+                    <div class="mode-chip"><span class="gl">⏵⏵</span> auto-accept edits <span class="hint">— ⌘⇧M to toggle</span></div>
+                    <div class="input">
+                      <span class="ph">Reply, or type <span style="font-family:var(--mono)">/</span> for commands…</span>
+                      <span class="send">↑</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- EDITOR -->
+                <div class="pane editor">
+                  <div class="tabs">
+                    <div class="tab on"><span class="dirty">●</span>release-plan.md<span class="x">×</span></div>
+                    <div class="tab">changelog.md<span class="x">×</span></div>
+                  </div>
+                  <div class="doc">
+                    <div class="doc-scroll">
+                      <div class="prose">
+                        <h1>Shipping clamui 0.2<span class="caret" aria-hidden="true"></span></h1>
+                        <p>This release makes the editor feel native to the way developers already work — <strong>fast, quiet, and out of the way</strong>.</p>
+                        <h2>What changed</h2>
+                        <p>The Claude session now <span class="sel">streams token by token, with tool calls and reasoning shown inline<span class="fxchip"><span class="star">✦</span> Edit <span class="k">⌘K</span></span></span>. Diffs render side by side before anything touches disk.</p>
+                        <blockquote>Every edit is reviewable. Nothing is written without your say-so.</blockquote>
+                        <p>Drop an image with <span class="ic">![alt](path)</span> and it renders in place:</p>
+                        <div class="imgph">cover.png</div>
+                        <p>See the migration notes for the few breaking changes.</p>
+                      </div>
+                    </div>
+                    <div class="outline">
+                      <div class="ot">Outline</div>
+                      <div class="oi l1 on">Shipping clamui 0.2</div>
+                      <div class="oi l2">What changed</div>
+                      <div class="oi l2">Migration notes</div>
+                      <div class="oi l1">Known issues</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FEATURES ===================== -->
+  <section id="features" aria-labelledby="features-h2">
+    <div class="wrap">
+      <div class="features-head">
+        <p class="eyebrow"><span class="n">01</span> Features</p>
+        <h2 class="sec-title" id="features-h2">A clean editor, a capable AI, and a gate between the two</h2>
+      </div>
+
+      <div class="feat-grid">
+        <!-- Card 1 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">¶</div>
+          <h3>Write markdown, see it rendered</h3>
+          <p>Headings, bold, lists, blockquotes, and images render inline as you type — Notion-style, without giving up the file. The file on disk stays <strong>byte-exact markdown</strong>; markers hide off the active line. Formatting is one chord away, and pressing it again unwraps.</p>
+          <div class="feat-keys">
+            <span class="keycap">⌘B<span class="lbl">bold</span></span>
+            <span class="keycap">⌘I<span class="lbl">italic</span></span>
+            <span class="keycap">⌘E<span class="lbl">code</span></span>
+            <span class="keycap">⌘⇧X<span class="lbl">strike</span></span>
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">✦</div>
+          <h3>Your own Claude subscription. No API key.</h3>
+          <p>Sign in with your existing Claude account via OAuth. The chat panel streams responses token by token, rendered as markdown, with thinking steps and tool cards visible. Sonnet by default — pick model and effort level per session, toggle edit mode with <b>⌘⇧M</b>, <b>/clear</b> to start fresh, or resume a previous session.</p>
+          <div class="feat-keys">
+            <span class="keycap">⌘⇧M<span class="lbl">edit mode</span></span>
+            <span class="keycap">/clear<span class="lbl">reset session</span></span>
+            <span class="keycap">⏱<span class="lbl">resume session</span></span>
+          </div>
+        </article>
+
+        <!-- Card 3 — featured -->
+        <article class="feat featured">
+          <div class="feat-glyph" aria-hidden="true">⌘K</div>
+          <h3>Nothing is written until you say so</h3>
+          <p>Select text and press <b>⌘K</b> (or tap the ✦ chip). Claude proposes a change. You see it as a <strong>green/red diff</strong> before anything is written. The built-in Edit and Write tools are disabled — the reviewed diff is the only way AI touches your files.</p>
+          <div class="feat-keys">
+            <span class="keycap">⌘K<span class="lbl">inline edit</span></span>
+          </div>
+          <a class="feat-link" href="#reviewed">See how reviewing works →</a>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">⌁</div>
+          <h3>Your files, your machine</h3>
+          <p>Files live on your own disk with <strong>atomic saves</strong> — no partial writes. The editor watches for external changes and reloads when a file is modified outside the app. No cloud sync, no account storage, no uploads.</p>
+        </article>
+
+        <!-- Card 5 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">◐</div>
+          <h3>Plasma: the interface gets out of the way</h3>
+          <p>Dark, light, or system theme — switches instantly and persists. Panels are hidden by default and toggled with a single chord. Inter for prose, JetBrains Mono for code.</p>
+          <div class="feat-keys">
+            <span class="keycap">⌘⇧B<span class="lbl">file tree</span></span>
+            <span class="keycap">⌘⇧O<span class="lbl">outline</span></span>
+            <span class="keycap">⌘O<span class="lbl">open folder</span></span>
+          </div>
+        </article>
+
+        <!-- Card 6 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">⇲</div>
+          <h3>Export via pandoc</h3>
+          <p>When the document is ready, render it to docx, HTML, or PDF through pandoc. Built-in starter templates ship with the app, and your own per-format templates are remembered. Runs locally — no upload, no cloud conversion. The source stays markdown.</p>
+        </article>
+
+        <!-- Card 7 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">⌘⏎</div>
+          <h3>Review at keyboard speed</h3>
+          <p>Accept with <b>⌘⏎</b>, reject with <b>⌘⌫</b>, hop between staged edits with <b>Tab</b>. Resolving one card auto-advances to the next, and <b>⌘Z</b> re-stages the last decision if you change your mind.</p>
+          <div class="feat-keys">
+            <span class="keycap">⌘⏎<span class="lbl">accept</span></span>
+            <span class="keycap">⌘⌫<span class="lbl">reject</span></span>
+            <span class="keycap">Tab<span class="lbl">next edit</span></span>
+          </div>
+        </article>
+
+        <!-- Card 8 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">⊘</div>
+          <h3>Tools ask before they act</h3>
+          <p>In ask mode, every external tool call surfaces as a prompt — <strong>allow once, always allow, or deny</strong>. Direct-write tools stay blacklisted either way. Flip between allow and ask with one chord.</p>
+          <div class="feat-keys">
+            <span class="keycap">⌘⇧C<span class="lbl">tool mode</span></span>
+          </div>
+        </article>
+
+        <!-- Card 9 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">⊕</div>
+          <h3>New files are reviewed too</h3>
+          <p>When Claude proposes a brand-new file, it arrives as a <strong>green create diff</strong> — the full content, reviewed like any edit. Accept writes the file and opens it; nothing exists on disk until then.</p>
+        </article>
+
+        <!-- Card 10 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">◈</div>
+          <h3>Bring your MCP connectors</h3>
+          <p>clamui discovers the MCP servers you've already set up for Claude Code — claude.ai connectors included — and adds them to the session with a click. No re-configuring, no copied tokens.</p>
+        </article>
+
+        <!-- Card 11 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">@</div>
+          <h3>A ⌘K that knows your files</h3>
+          <p>The inline prompt wraps as you type, and <b>@</b> autocompletes your project's files so instructions can point at real paths. On a staged diff, <b>✦</b> opens a follow-up — refine the edit and the revision replaces the old card.</p>
+          <div class="feat-keys">
+            <span class="keycap">@<span class="lbl">mention a file</span></span>
+            <span class="keycap">✦<span class="lbl">follow-up</span></span>
+          </div>
+        </article>
+
+        <!-- Card 12 -->
+        <article class="feat">
+          <div class="feat-glyph" aria-hidden="true">⎋</div>
+          <h3>Esc means stop</h3>
+          <p>A generation going the wrong way stops <strong>immediately</strong> — not after the turn finishes. The partial response stays in the transcript and the session remains resumable.</p>
+          <div class="feat-keys">
+            <span class="keycap">Esc<span class="lbl">stop</span></span>
+            <span class="keycap">⌃C<span class="lbl">stop</span></span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== REVIEWED EDITS ===================== -->
+  <section id="reviewed" aria-labelledby="reviewed-h2">
+    <div class="wrap">
+      <div class="reviewed-head">
+        <p class="eyebrow"><span class="n">02</span> Reviewed edits</p>
+        <h2 class="sec-title" id="reviewed-h2">The diff is the feature</h2>
+      </div>
+
+      <div class="reviewed-body">
+        <p>Most editors that bolt on AI give you an "accept all" button and hope for the best. clamui works the opposite way: when Claude proposes an edit, you see every added line in <strong>green</strong> and every removed line in <strong>red</strong>, side by side, before anything is written. Accept to apply, Reject to discard. No undo-hunting.</p>
+        <p>This is not a preference — it's <strong>enforced at the tool level</strong>. The Edit and Write tools that would let Claude write directly to disk are disabled. Every edit arrives through the diff pipeline, or it doesn't arrive at all. So you can ask freely, experiment with rewrites, and never worry about a change landing while you weren't looking.</p>
+      </div>
+
+      <blockquote class="pullquote">"Nothing is written without your say-so."</blockquote>
+
+      <div class="scroller" role="img" aria-label="Screenshot: a side-by-side review of a proposed edit to release-plan.md — the current version on the left with removed lines in red, the proposed version on the right with added lines in green, and Accept and Reject buttons.">
+        <!-- DIFF FRAME (reused from Plasma mockup) — decorative, hidden from AT -->
+        <div class="app diff-frame" aria-hidden="true">
+          <div class="review">
+            <div class="review-head">
+              <span class="t">Claude proposes an edit to <b>release-plan.md</b><span class="of">1 of 2</span></span>
+              <div class="review-actions">
+                <span class="kbd">⌘⏎ accept · ⌘⌫ reject</span>
+                <span class="btn-rej">Reject</span>
+                <span class="btn-acc">Accept</span>
+              </div>
+            </div>
+            <div class="cols">
+              <div class="col before">
+                <div class="col-label">Current</div>
+                <div class="difftext">
+                  <p class="line-del gutter-del">We think this release <span class="t-del">might</span> make the editor <span class="t-del">a little bit</span> better for developers who like to work fast.</p>
+                  <p>This release makes the editor feel native to the way developers already work.</p>
+                  <p class="line-del gutter-del">There are <span class="t-del">some</span> changes to how diffs work.</p>
+                </div>
+              </div>
+              <div class="col after">
+                <div class="col-label">Proposed</div>
+                <div class="difftext">
+                  <p class="line-add gutter-add">This release makes the editor feel <span class="t-add">native to the way developers already work</span> — fast, quiet, and out of the way.</p>
+                  <p>This release makes the editor feel native to the way developers already work.</p>
+                  <p class="line-add gutter-add">Diffs now render <span class="t-add">side by side before anything touches disk</span>.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DOWNLOAD ===================== -->
+  <section id="download" aria-labelledby="download-h2">
+    <div class="wrap">
+      <div class="dl-head">
+        <p class="eyebrow"><span class="n">03</span> Download</p>
+        <h2 class="sec-title" id="download-h2">Get clamui</h2>
+      </div>
+
+      <div class="dl-grid">
+        <!-- macOS -->
+        <div class="dl-card primary">
+          <h3>macOS</h3>
+          <p>Download the dmg and drag clamui to Applications — updates then arrive in-app. Built for Apple silicon — macOS is the primary tested platform today.</p>
+          <a class="btn btn-primary" href="https://github.com/murilo-cunha/clamui-site/releases/latest/download/clamui_aarch64.dmg">Download for macOS →</a>
+          <p class="dl-note"><span class="ver">v0.7.0</span> · early and experimental — expect rough edges. The binary is unsigned, so the first time you'll need to right-click → <kbd>Open</kbd>.</p>
+          <p class="dl-note">Or install with Homebrew:</p>
+          <div class="codebox">
+            <div class="codebox-head">
+              <span class="lbl">terminal</span>
+              <button class="copy-btn" type="button" aria-label="Copy brew install command">Copy</button>
+            </div>
+            <pre><span class="cmd-prompt">$</span> brew tap murilo-cunha/clamui
+<span class="cmd-prompt">$</span> brew install clamui</pre>
+          </div>
+        </div>
+
+        <!-- VS Code extension -->
+        <div class="dl-card">
+          <h3>VS Code extension</h3>
+          <p>The same reviewed-edit editor inside VS Code — connected to the Claude Code you already use, not a second chat.</p>
+          <ol class="dl-steps">
+            <li>Download <a href="https://github.com/murilo-cunha/clamui-site/releases/latest/download/clamui.vsix"><span class="mono">clamui.vsix</span></a> — the link always serves the newest release.</li>
+            <li>Install it — or use the Extensions view → <kbd>⋯</kbd> menu → <em>Install from VSIX…</em>
+              <div class="codebox">
+                <div class="codebox-head">
+                  <span class="lbl">terminal</span>
+                  <button class="copy-btn" type="button" aria-label="Copy install command">Copy</button>
+                </div>
+                <pre><span class="cmd-prompt">$</span> code --install-extension clamui.vsix</pre>
+              </div>
+            </li>
+            <li>Open any <span class="mono">.md</span> file → right-click its tab → <em>Reopen Editor With…</em> → <strong>clamui Markdown</strong> (or command palette: <em>clamui: Open with clamui</em>).</li>
+            <li>Optional AI: install the <strong>Claude Code</strong> extension (or have <span class="mono">claude</span> on PATH) and run <em>clamui: Connect Claude Code</em> — Claude's edits then arrive as reviewable diffs in the editor.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap">
+    <div class="foot-inner">
+      <span class="foot-brand"><svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path class="shell" d="M8 39 C 12 51, 24 55, 32 55 C 40 55, 52 51, 56 39 C 50 43, 40 45, 32 45 C 24 45, 14 43, 8 39 Z"/><path class="shell" d="M11 27 C 15 17, 25 13.5, 32 13.5 C 39 13.5, 49 17, 53 27 C 47.5 23.5, 39 22, 32 22 C 25 22, 16.5 23.5, 11 27 Z"/><g transform="translate(23.5 24) scale(0.7083)"><path class="spark" d="M12 0C12 6 6 12 0 12C6 12 12 18 12 24C12 18 18 12 24 12C18 12 12 6 12 0Z"/></g></svg>clamui</span>
+      <a href="https://github.com/murilo-cunha/clamui-site">GitHub</a>
+      <span class="foot-built">Built with Tauri · React · Rust · CodeMirror 6</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var KEY = "clamui-theme";
+
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    var icon = document.getElementById("themeIcon");
+    var label = document.getElementById("themeLabel");
+    if (icon) icon.textContent = t === "dark" ? "☾" : "☀";
+    if (label) label.textContent = t === "dark" ? "Dark" : "Light";
+  }
+
+  // Init from storage; default to dark.
+  var stored;
+  try { stored = localStorage.getItem(KEY); } catch (e) {}
+  applyTheme(stored === "light" || stored === "dark" ? stored : "dark");
+
+  var toggle = document.getElementById("themeToggle");
+  if (toggle) {
+    toggle.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+    });
+  }
+
+  // Mobile nav toggle
+  var burger = document.getElementById("burger");
+  var links = document.getElementById("navlinks");
+  if (burger && links) {
+    burger.addEventListener("click", function () {
+      var open = links.classList.toggle("open");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    links.addEventListener("click", function (e) {
+      if (e.target.tagName === "A") {
+        links.classList.remove("open");
+        burger.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  // Copy buttons: each copies its codebox's <pre> text, stripping the "$ "
+  // prompts, so every codebox on the page gets copy-paste for free.
+  Array.prototype.forEach.call(document.querySelectorAll(".codebox .copy-btn"), function (btn) {
+    btn.addEventListener("click", function () {
+      var box = btn.closest(".codebox");
+      var pre = box && box.querySelector("pre");
+      if (!pre) return;
+      var text = pre.textContent
+        .split("\n")
+        .map(function (l) { return l.replace(/^\$\s?/, ""); })
+        .filter(function (l) { return l.trim().length > 0; })
+        .join("\n");
+      var done = function () {
+        var prev = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(function () { btn.textContent = prev; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(done);
+      } else {
+        done();
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
